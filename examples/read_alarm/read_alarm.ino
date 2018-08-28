@@ -18,9 +18,10 @@
 #include <ADS8688.h>
 #define RANGE R=0
 
-ADS8688 bank = ADS8688();                               // Instantiate ADS8688 with PIN 10 as default CS
+ADS8688 bank;                           
 
 void setup() {
+  bank.init();                                           // Instantiate ADS8688 with PIN 10 as default CS
   bank.setChannelRange(0,RANGE);                        // set all channel range to +- 1.25*Vref
   bank.setAlarm(true);                                  // enable alarm detection
   bank.setChannelLowThreshold(0,bank.V2I(-3.3,RANGE));  // set low  threshold to -3.3V

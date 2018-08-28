@@ -89,15 +89,17 @@
 	class ADS8688 {
 		public:
             ADS8688();
-            
+
             void init();                                    // instantiate with PIN10 as CS
 			void init(uint8_t cs);                          // instantiate with custom CS pin
         
             void setVREF(float vref);                     // set external Vref
+            void setDaisy(int d);                         // define number of daisy-chained chips
             float I2V(uint16_t x, uint8_t range);         // map uint16 to Volts according to Vref and Range
             uint16_t V2I(float x, uint8_t range);         // map Volts to uint16 according to Vref and Range
 
             uint16_t noOp();                              // continue previous operation
+            void noOp(uint16_t parray[]);                        // allow for multiple chips
             uint16_t standBy();                           // device in stand by mode
             uint16_t powerDown();                         // power down the device
             uint16_t reset();                             // reset the device
@@ -141,12 +143,15 @@
         
             uint8_t  getCommandReadBack();                              // Command executed in previous data frame.
         
+            uint8_t _daisy;                            // number of chips, daisy-chained 
+
 		private:
             float _vref;
             uint8_t _cs, _mode, _feature;                 // chip select pin, current operation mode
             void writeRegister(uint8_t reg, uint8_t val); // write 8 bit data into a register
             uint8_t readRegister(uint8_t reg);            // read 8 bit data in a specific register
             uint16_t cmdRegister(uint8_t reg);            // send a command register and read
+            void cmdRegister(uint8_t reg, uint16_t parray[]);       // allow for multiple chips
         };
 
 #endif // ADS8688_h

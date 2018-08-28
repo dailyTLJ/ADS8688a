@@ -18,8 +18,9 @@ ADS8688::ADS8688() {
 void ADS8688::init() {
     _cs = 10;                     // default chip select pin
     _mode = MODE_IDLE;            // start in Idle mode
-    _vref = 4.096;                // vref at 4.096
+    _vref = 4.096;             // vref at 4.096
     _feature = 0;                 // start with no feature
+    _daisy = 1;
     pinMode(_cs,OUTPUT);          // set the pin as output
     digitalWrite(_cs,HIGH);       // set the pin to default HIGH state
     SPI.begin();                  // initiate SPI
@@ -30,6 +31,7 @@ void ADS8688::init(byte cs) {
     _mode = MODE_IDLE;            // start in Idle mode
     _vref = 4.096;                // vref at 4.096
     _feature = 0;                 // start with no feature
+    _daisy = 1;
     pinMode(_cs,OUTPUT);          // set the pin as output
     digitalWrite(_cs,HIGH);       // set the pin to default HIGH state
     SPI.begin();                  // initiate SPI
@@ -38,6 +40,10 @@ void ADS8688::init(byte cs) {
 uint16_t ADS8688::noOp() {
     return cmdRegister(NO_OP);
     }
+
+void ADS8688::noOp(uint16_t parray[]) {
+    return cmdRegister(NO_OP, parray);
+}
 
 uint16_t ADS8688::standBy() {
     return cmdRegister(STDBY);
@@ -251,6 +257,11 @@ uint8_t ADS8688::getCommandReadBack() {
 
 //-----------------------------------------------------------------------------
 
+
+void ADS8688::setDaisy(int d) {
+    _daisy = d;
+}
+
 void ADS8688::setVREF(float vref) {
     _vref = vref;
     }
@@ -370,12 +381,13 @@ uint8_t ADS8688::readRegister(uint8_t reg) {
     return result;
     }
 
+
 uint16_t ADS8688::cmdRegister(uint8_t reg) {
     SPI.beginTransaction(SPISettings(17000000, MSBFIRST, SPI_MODE1));
     digitalWrite(_cs, LOW);
     SPI.transfer(reg);
     SPI.transfer(0x00);
-    int16_t result = 0;
+    uint16_t result = 0;
     if (_mode > 4) {
         // only 16 bit if POWERDOWN or STDBY or RST or IDLE
         byte MSB = SPI.transfer(0x00);
@@ -417,4 +429,56 @@ uint16_t ADS8688::cmdRegister(uint8_t reg) {
     }
     return result;
     }
+
+
+void ADS8688::cmdRegister(uint8_t reg, uint16_t parray[]) {
+    SPI.beginTransaction(SPISettings(17000000, MSBFIRST, SPI_MODE1));
+    digitalWrite(_cs, LOW);
+    SPI.transfer(reg);
+    SPI.transfer(0x00);
+
+    if (_mode > 4) {
+         // only 16 bit if POWERDOWN or STDBY or RST or IDLE
+        for (int i=0; i<_daisy; i++) {
+            parray[i] = 0;
+            byte MSB = SPI.transfer(0x00);
+            byte LSB = SPI.transfer(0x00);
+            parray[i] = ( MSB << 8) | LSB;
+        }
+    }
+
+    digitalWrite(_cs, HIGH);
+    SPI.endTransaction();
+    
+    // when exit power down it takes 15 ms to be operationnal
+    if (_mode == MODE_POWER_DN) delay(15);
+    
+    switch (reg) {
+        case NO_OP:
+            switch (_mode) {
+                case MODE_RESET:    _mode = MODE_IDLE;
+                    break;
+                case MODE_PROG :    _mode = MODE_IDLE;
+                    break;
+                case MODE_AUTO_RST: _mode = MODE_AUTO;
+                    break;
+            }
+            break;
+        case STDBY:
+            _mode = MODE_STANDBY;
+            break;
+        case PWR_DN:
+            _mode = MODE_POWER_DN;
+            break;
+        case RST:
+            _mode = MODE_RESET;
+            break;
+        case AUTO_RST:
+            _mode = MODE_AUTO_RST;
+            break;
+        default:
+            _mode = MODE_MANUAL;
+            break;
+    }
+}
 

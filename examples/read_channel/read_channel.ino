@@ -17,9 +17,10 @@
 
 #include <ADS8688.h>
 
-ADS8688 bank = ADS8688();           // Instantiate ADS8688 with PIN 10 as default CS
+ADS8688 bank; 
 
 void setup() {
+  bank.init();                       // Instantiate ADS8688 with PIN 10 as default CS
   bank.setChannelSPD(0b00000010);   // enable channel 0, power-down the others
   bank.setChannelRange(0,R6);       // set all channel range to +- 1.25*Vref
   bank.autoRst();                   // reset auto sequence
