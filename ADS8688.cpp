@@ -8,6 +8,14 @@
 ////////////////////////
 
 ADS8688::ADS8688() {
+    
+    }
+
+/////////////////////////
+//  PUBLIC METHODS    //
+/////////////////////////
+
+void ADS8688::init() {
     _cs = 10;                     // default chip select pin
     _mode = MODE_IDLE;            // start in Idle mode
     _vref = 4.096;                // vref at 4.096
@@ -15,21 +23,17 @@ ADS8688::ADS8688() {
     pinMode(_cs,OUTPUT);          // set the pin as output
     digitalWrite(_cs,HIGH);       // set the pin to default HIGH state
     SPI.begin();                  // initiate SPI
-    }
+}
 
-ADS8688::ADS8688(byte cs) {
-	_cs = cs;                     // choose the chip select pin
+void ADS8688::init(byte cs) {
+    _cs = cs;                     // choose the chip select pin
     _mode = MODE_IDLE;            // start in Idle mode
     _vref = 4.096;                // vref at 4.096
     _feature = 0;                 // start with no feature
-	pinMode(_cs,OUTPUT);          // set the pin as output
+    pinMode(_cs,OUTPUT);          // set the pin as output
     digitalWrite(_cs,HIGH);       // set the pin to default HIGH state
     SPI.begin();                  // initiate SPI
-    }
-
-/////////////////////////
-//  PUBLIC METHODS    //
-/////////////////////////
+}
 
 uint16_t ADS8688::noOp() {
     return cmdRegister(NO_OP);
